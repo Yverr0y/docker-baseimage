@@ -357,6 +357,33 @@ jobs:
           reason: ${{ env.WORKFLOW_REASON }}
           token: ${{ env.WORKFLOW_AUTH_TOKEN }}
 
+  trigger_build_soapy_full:
+    name: Trigger deploy of soapy-full images (${{ matrix.slug }})
+    needs: [deploy_ghcr_soapy_full]
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.disable_upstream_triggers != 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {
+              slug: xng,
+              repo: sdr-enthusiasts/docker-xng,
+              workflow: deploy.yml,
+              ref: main,
+            }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Dispatch and capture ${{ matrix.slug }}
+        uses: ./.github/actions/dispatch-and-capture
+        with:
+          slug: ${{ matrix.slug }}
+          repo: ${{ matrix.repo }}
+          workflow: ${{ matrix.workflow }}
+          ref: ${{ matrix.ref }}
+          reason: ${{ env.WORKFLOW_REASON }}
+          token: ${{ env.WORKFLOW_AUTH_TOKEN }}
+
   trigger_build_planefence:
     name: Trigger deploy of sdr-enthusiasts/docker-planefence (${{ matrix.slug }})
     needs: [deploy_ghcr_planefence_base]
@@ -479,6 +506,7 @@ jobs:
     needs:
       - trigger_build_base
       - trigger_build_acars_soapy
+      - trigger_build_soapy_full
       - trigger_build_planefence
       - trigger_build_wreadsb
       - trigger_build_dump978
